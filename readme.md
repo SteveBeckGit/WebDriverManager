@@ -15,3 +15,10 @@ Scans the registry for the given browser, if found it will return a version numb
 The driver will be stored in %USERPROFILE%/WebDrivers 
 If the driver already exists it will not be redownloaded
 
+Examples
+
+Chrome Driver
+```csharp
+    var binaryDir = Manager.GetWebDriver(Manager.BrowserType.CHROME);
+    var driver = new ChromeDriver(binaryDir);
+```
