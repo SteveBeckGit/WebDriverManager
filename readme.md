@@ -22,3 +22,26 @@ Chrome Driver
     var binaryDir = Manager.GetWebDriver(Manager.BrowserType.CHROME);
     var driver = new ChromeDriver(binaryDir);
 ```
+
+Firefox
+```csharp
+
+   var binaryDir = Manager.GetWebDriver(Manager.BrowserType.FIREFOX);
+
+    FirefoxDriverService firefoxDriverService = FirefoxDriverService.CreateDefaultService(binaryDir);
+    firefoxDriverService.FirefoxBinaryPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
+
+    var driver = new FirefoxDriver(firefoxDriverService);
+```
+
+IE
+```csharp
+    var binaryDir = Manager.GetWebDriver(Manager.BrowserType.INTERNET_EXPLORER);
+    var driver = new InternetExplorerDriver(binaryDir);
+```
+
+Edge
+```csharp
+    var binaryDir = Manager.GetWebDriver(Manager.BrowserType.EDGE);
+    var driver = new EdgeDriver(binaryDir);
+```
