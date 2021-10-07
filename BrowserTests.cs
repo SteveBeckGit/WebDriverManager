@@ -37,7 +37,7 @@ namespace WebDriverManager
         public void ChromeTest() 
         {
             var binaryDir = Manager.GetWebDriver(Manager.BrowserType.CHROME);
-            var driver = new ChromeDriver();
+            var driver = new ChromeDriver(binaryDir);
             Assert.That(driver != null);
             driver.Quit();
         }
@@ -56,7 +56,7 @@ namespace WebDriverManager
         public void FirefoxTest()
         {
             var binaryDir = Manager.GetWebDriver(Manager.BrowserType.FIREFOX);
-            FirefoxDriverService firefoxDriverService = FirefoxDriverService.CreateDefaultService();
+            FirefoxDriverService firefoxDriverService = FirefoxDriverService.CreateDefaultService(binaryDir);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) 
             {
                 firefoxDriverService.FirefoxBinaryPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
@@ -70,19 +70,28 @@ namespace WebDriverManager
         [Test]
         public void InternetExplorerTest()
         {
-            var binaryDir = Manager.GetWebDriver(Manager.BrowserType.INTERNET_EXPLORER);
-            var driver = new InternetExplorerDriver(binaryDir);
-            Assert.That(driver != null);
-            driver.Quit();
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var binaryDir = Manager.GetWebDriver(Manager.BrowserType.INTERNET_EXPLORER);
+                var driver = new InternetExplorerDriver(binaryDir);
+                Assert.That(driver != null);
+                driver.Quit();
+            }
+
+
+            
         }
 
         [Test]
         public void EdgeTest()
         {
-            var binaryDir = Manager.GetWebDriver(Manager.BrowserType.EDGE);
-            var driver = new EdgeDriver(binaryDir);
-            Assert.That(driver != null);
-            driver.Quit();
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var binaryDir = Manager.GetWebDriver(Manager.BrowserType.EDGE);
+                var driver = new EdgeDriver(binaryDir);
+                Assert.That(driver != null);
+                driver.Quit();
+            }
         }
     }
 }

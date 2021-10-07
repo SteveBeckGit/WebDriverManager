@@ -142,7 +142,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 case BrowserType.INTERNET_EXPLORER:
 
                     driver = GetVersionFromGoogleAPIS(ie_url, browser, os);
-                    return DownloadAndUnzip(ie_url + driver, os, browser, "IEDriverServer.exe", "webdriver.ie.driver");
+                    return DownloadAndUnzip(ie_url + driver, os, browser, "IEDriverServer", "webdriver.ie.driver");
 
                 case BrowserType.EDGE:
 
@@ -399,11 +399,13 @@ namespace Roman_Framework.Selenium.WebDriverManager
                     }
                 }
 
-                MoveFileToBin(destination,filename);
 
 
             }
-
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                RunBashCommand("-c \"chmod +x "+destination+"/"+filename+"\"");
+            }
             //System.Environment.SetEnvironmentVariable(environmentVariable, destination);
             return destination;
         }
