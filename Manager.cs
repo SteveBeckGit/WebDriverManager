@@ -108,6 +108,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
             return response.Content;
         }
 
+    
         /// <summary>
         /// Returns an appropraite WebDriver for a given browser and Operating System
         /// If using MAC or Linux, create a Browser object with name and Version to inject
@@ -283,7 +284,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
             var osPlatform = Environment.OSVersion;
             bool sixtyfourBit = Environment.Is64BitOperatingSystem;
 
-            if (!os.Equals(OperatingSystem.WINDOWS) && browser.Name.ToLower().Contains("explorer") && browser.Name.ToLower().Contains("internet"))
+            if (!osPlatform.Equals(OperatingSystem.WINDOWS) && browser.Name.ToLower().Contains("explorer") && browser.Name.ToLower().Contains("internet"))
             {
                 throw new NotImplementedException();
             }
@@ -294,11 +295,11 @@ namespace Roman_Framework.Selenium.WebDriverManager
             }
 
 
-            if (os.Equals(OperatingSystem.WINDOWS))
+            if (osPlatform.Equals(OperatingSystem.WINDOWS))
             {
                 return version.Where(x => x.Key.ToLower().Contains("win32")).FirstOrDefault().Key;
             }
-            else if (os.Equals(OperatingSystem.MAC))
+            else if (osPlatform.Equals(OperatingSystem.MAC))
             {
 
                 return version.Where(x => x.Key.ToLower().Contains("mac" + (sixtyfourBit ? "64" : "32"))).FirstOrDefault().Key;
@@ -316,6 +317,27 @@ namespace Roman_Framework.Selenium.WebDriverManager
             return arr[arr.Length - 1];
         }
 
+        internal static string GetWebDriverPath(Browser browser)
+        {
+            var os = Environment.OSVersion;
+            if(os.Equals(OperatingSystem.WINDOWS))
+            {
+                string user = Environment.GetEnvironmentVariable("USERPROFILE");
+                return user + "\\WebDrivers\\" + browser.Name + "\\" + os.ToString() + "\\" + browser.Version + "\\";
+            }
+            else if(os.Equals(OperatingSystem.MAC))
+            {
+                string user = Environment.GetEnvironmentVariable("%HOMEDRIVE%%HOMEPATH%");
+                return user+"/WebDrivers/"+browser.Name+"/"+browser.Version+"/";
+
+            }
+            else
+            {
+                string user = Environment.GetEnvironmentVariable("HOME");
+                return user+"/WebDrivers/"+browser.Name+"/"+browser.Version+"/";
+            }
+        }
+
         /// <summary>
         /// Downloads the specified URL and then extracts the docs based on its extensions, supports .zip and .tar.gz 
         /// Uses the User directory\\WebDrivers folder to store extracted files
@@ -329,7 +351,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
         private static string DownloadAndUnzip(string url, OperatingSystem os, Browser browser, string filename, string environmentVariable)
         {
             string user = System.Environment.GetEnvironmentVariable("USERPROFILE");
-            string destination = user + "\\WebDrivers\\" + browser.Name + "\\" + os.ToString() + "\\" + browser.Version + "\\";
+            string destination = GetWebDriverPath(browser);
             Directory.CreateDirectory(destination);
 
             string zipFileName = GetLastItemInSplit(url, "/");
@@ -370,10 +392,34 @@ namespace Roman_Framework.Selenium.WebDriverManager
                         File.Copy(destination + "msedgedriver.exe", destination + "MicrosoftWebDriver.exe");
                     }
                 }
+
+                MoveFileToBin(destination,"chromedriver");
+
+
             }
 
-            System.Environment.SetEnvironmentVariable(environmentVariable, destination);
+            //System.Environment.SetEnvironmentVariable(environmentVariable, destination);
             return destination;
+        }
+
+        internal static void MoveFileToBin(string destination, string driverType)
+        {
+            string driver = (Environment.OSVersion.Equals(OperatingSystem.WINDOWS))? driverType+".exe" : driverType;
+
+            if(File.Exists(destination+"/"+driver))
+            {
+                File.Copy(destination+driver,AppDomain.CurrentDomain.BaseDirectory+driver,true);
+            }
+
+
+            if(!Environment.OSVersion.Equals(OperatingSystem.WINDOWS))
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
+                Arguments = "-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driverType+"\""};
+                Process proc = new Process(){StartInfo = startInfo};
+                proc.Start();
+            }
+            
         }
 
         internal static void ExtractTGZ(String gzArchiveName, String destFolder)
@@ -403,6 +449,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
          */
         internal static List<Browser> GetBrowsers()
         {
+            var browsers = new List<Browser>();
             //TO-DO
             //Need methods for getting browser versions on Linux and MAC
             //.net core runs on mac and linux, this should be possible
@@ -423,7 +470,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
                     string[] supportedBrowsers = new string[]{"chrome", "firefox", "iexplore", "edge"};                                
                     browserNames = browserNames.Where(x => supportedBrowsers.Any(x.ToLower().Contains)).ToArray();
 
-                    var browsers = new List<Browser>();
+                    
                     for (int i = 0; i < browserNames.Length; i++)
                     {
                         Browser browser = new Browser();
@@ -450,7 +497,21 @@ namespace Roman_Framework.Selenium.WebDriverManager
             }
             else
             {
-                throw new NotImplementedException("Get Browser types not implemented for non-windows users, please set browser information manually");
+                ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
+                Arguments = "-c \"/usr/bin/google-chrome --version\"",
+                RedirectStandardOutput=true};
+
+                Process proc = new Process(){StartInfo = startInfo};
+                proc.Start();
+                string output = proc.StandardOutput.ReadToEnd();
+
+                Browser chrome = new Browser(){
+                    Name = "chrome",
+                    Version = output.Split(" ")[2].Split(".")[0]
+                };
+
+                browsers.Add(chrome);
+                return browsers;
             }
 
         }

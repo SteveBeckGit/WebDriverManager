@@ -36,7 +36,7 @@ namespace WebDriverManager
         public void ChromeTest() 
         {
             var binaryDir = Manager.GetWebDriver(Manager.BrowserType.CHROME);
-            var driver = new ChromeDriver(binaryDir);
+            var driver = new ChromeDriver();
             Assert.That(driver != null);
             driver.Quit();
         }
