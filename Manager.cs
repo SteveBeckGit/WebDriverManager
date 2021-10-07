@@ -118,12 +118,10 @@ namespace Roman_Framework.Selenium.WebDriverManager
         /// <param name="os">Supports Windows, Linux, and MAC - defaults to Windows</param>
         /// <param name="browser">Default to null, set this when not using Windows</param>
         /// <returns></returns>
-        public static string GetWebDriver(BrowserType browserType, OperatingSystem os = OperatingSystem.WINDOWS, Browser browser = null)
+        public static string GetWebDriver(BrowserType browserType)
         {
-            if (browser == null)
-            {
-                browser = GetBrowser(GetBrowsers(), browserType);
-            }
+           
+            Browser browser = GetBrowser(GetBrowsers(), browserType);
 
             string driver;
 
@@ -131,26 +129,26 @@ namespace Roman_Framework.Selenium.WebDriverManager
             {
                 case BrowserType.CHROME:
 
-                    driver = GetVersionFromGoogleAPIS(chrome_url, browser, os);
-                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver", "webdriver.chrome.driver");
+                    driver = GetVersionFromGoogleAPIS(chrome_url, browser);
+                    return DownloadAndUnzip(chrome_url + driver, browser, "chromedriver");
 
                 case BrowserType.FIREFOX:
 
-                    driver = GetFireFoxURL(browser, os);
-                    return DownloadAndUnzip(driver, os, browser, "geckodriver", "webdriver.gecko.driver");
+                    driver = GetFireFoxURL(browser);
+                    return DownloadAndUnzip(driver, browser, "geckodriver");
 
                 case BrowserType.INTERNET_EXPLORER:
 
-                    driver = GetVersionFromGoogleAPIS(ie_url, browser, os);
-                    return DownloadAndUnzip(ie_url + driver, os, browser, "IEDriverServer", "webdriver.ie.driver");
+                    driver = GetVersionFromGoogleAPIS(ie_url, browser);
+                    return DownloadAndUnzip(ie_url + driver, browser, "IEDriverServer");
 
                 case BrowserType.EDGE:
 
-                    return DownloadAndUnzip(GetEdgeURL(browser, os), os, browser, "msedgedriver", "webdriver.edge.driver");
+                    return DownloadAndUnzip(GetEdgeURL(browser), browser, "msedgedriver");
 
                 default:
-                    driver = GetVersionFromGoogleAPIS(chrome_url, browser, os);
-                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver", "webdriver.chrome.driver");
+                    driver = GetVersionFromGoogleAPIS(chrome_url, browser);
+                    return DownloadAndUnzip(chrome_url + driver, browser, "chromedriver");
             }
         }
 
@@ -158,7 +156,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
          * Gets the latest Firefox release from Github using the Github API
          * The latest Geckodriver supports backwards to version 60 of Firefox
          */
-        internal static string GetFireFoxURL(Browser browser, OperatingSystem os)
+        internal static string GetFireFoxURL(Browser browser)
         {
             try
             {
@@ -166,7 +164,6 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
                 var osPlatform = Environment.OSVersion;
                 bool sixtyfourBit = Environment.Is64BitOperatingSystem;
-
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
@@ -189,8 +186,6 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 Console.WriteLine(e.Message);
                 throw;
             }
-
-
         }
 
         /*
@@ -198,7 +193,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
          * Microsoft does not use an XML structure which deserialises neatly - open to suggestions - 
          * In order to extract the useful information we use Regex to find all the Name tags and then create Version objects to compare
          */
-        internal static string GetEdgeURL(Browser browser, OperatingSystem os)
+        internal static string GetEdgeURL(Browser browser)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             headers.Add("Accept", "application/xml");
@@ -251,7 +246,6 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 return edge_OS(version.ToString(), "arm" + (sixtyfourBit ? "64" : "32"));
             }
 
-
         }
 
 
@@ -260,7 +254,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
          * Retrieves Chromedriver versions from the archive 
          * Filters for the major versions of the specified browser and returns the latest driver with the same major version
          */
-        internal static string GetVersionFromGoogleAPIS(string url, Browser browser, OperatingSystem os)
+        internal static string GetVersionFromGoogleAPIS(string url, Browser browser)
         {
             var response = Get(url);
 
@@ -348,15 +342,14 @@ namespace Roman_Framework.Selenium.WebDriverManager
         /// <param name="filename"></param>
         /// <param name="environmentVariable"></param>
         /// <returns></returns>
-        private static string DownloadAndUnzip(string url, OperatingSystem os, Browser browser, string filename, string environmentVariable)
+        private static string DownloadAndUnzip(string url, Browser browser, string filename)
         {
+            //Adds the exe extension on windows machines
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 filename = filename + ".exe";
             }
 
-
-            string user = System.Environment.GetEnvironmentVariable("USERPROFILE");
             string destination = GetWebDriverPath(browser);
             Directory.CreateDirectory(destination);
 
@@ -380,9 +373,6 @@ namespace Roman_Framework.Selenium.WebDriverManager
                     {
                         throw new Exception("Unexpected file type, expected .zip or .tar.gz");
                     }
-
-
-
                 }
                 else
                 {
@@ -399,31 +389,14 @@ namespace Roman_Framework.Selenium.WebDriverManager
                     }
                 }
 
-
-
             }
+
+            //Sets permissions on the folder so that the driver can be launched
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 RunBashCommand("-c \"chmod +x "+destination+"/"+filename+"\"");
             }
-            //System.Environment.SetEnvironmentVariable(environmentVariable, destination);
             return destination;
-        }
-
-        internal static void MoveFileToBin(string destination, string driver)
-        {
-
-            if(File.Exists(destination+driver))
-            {
-                File.Copy(destination+driver,AppDomain.CurrentDomain.BaseDirectory+driver,true);
-            }
-
-
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                RunBashCommand("-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driver+"\"");
-            }
-            
         }
 
         internal static void RunBashCommand(string command)
@@ -440,7 +413,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
             {
                 RunBashCommand("-c \"cd "+destFolder+" && tar -xf "+gzArchiveName+"\"");
             }
-            catch (Exception e)
+            catch
             {
                 throw;
             }
@@ -457,8 +430,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
             //TO-DO
             //Need methods for getting browser versions on Linux and MAC
             //.net core runs on mac and linux, this should be possible
-            var osPlatform = Environment.OSVersion;
-            if (osPlatform.Platform.ToString().ToLower().Contains("win"))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 try
                 {
@@ -501,37 +473,48 @@ namespace Roman_Framework.Selenium.WebDriverManager
             }
             else
             {
-                
-
                 return GetLinuxBrowsers();
             }
 
         }
 
-        internal static string GetBashOutput(string browser)
+        internal static string GetBrowserVersionFromBash(string browser)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
-            Arguments = "-c \"/usr/bin/"+browser+" --version\"",
-            RedirectStandardOutput=true};
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo()
+                {
+                    FileName = "/bin/bash",
+                    Arguments = "-c \"/usr/bin/" + browser + " --version\"",
+                    RedirectStandardOutput = true
+                };
 
-            Process proc = new Process(){StartInfo = startInfo};
-            proc.Start();
-            string output = proc.StandardOutput.ReadToEnd();
-            return output;
+                Process proc = new Process() { StartInfo = startInfo };
+                proc.Start();
+                string output = proc.StandardOutput.ReadToEnd();
+                return output;
+            }
+            catch
+            {
+                Console.WriteLine("Unable to get browser version, was "+browser+" installed to the default directory?");
+                throw;
+            }
+            
         }
 
         internal static List<Browser> GetLinuxBrowsers()
         {
             List<Browser> browsers = new List<Browser>();
 
+            
             Browser chrome = new Browser(){
                     Name = "chrome",
-                    Version = GetBashOutput("google-chrome").Split(" ")[2].Split(".")[0]
+                    Version = GetBrowserVersionFromBash("google-chrome").Split(" ")[2].Split(".")[0]
                 };
 
             Browser firefox = new Browser(){
                 Name = "firefox",
-                Version = GetBashOutput("firefox").Split(" ")[2].Split(".")[0]
+                Version = GetBrowserVersionFromBash("firefox").Split(" ")[2].Split(".")[0]
             };
 
             browsers.Add(chrome);
