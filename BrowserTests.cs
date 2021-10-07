@@ -56,10 +56,8 @@ namespace WebDriverManager
         {
             var binaryDir = Manager.GetWebDriver(Manager.BrowserType.FIREFOX);
 
-            FirefoxDriverService firefoxDriverService = FirefoxDriverService.CreateDefaultService(binaryDir);
-            firefoxDriverService.FirefoxBinaryPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
 
-            var driver = new FirefoxDriver(firefoxDriverService);
+            var driver = new FirefoxDriver();
             Assert.That(driver != null);
             driver.Quit();
         }

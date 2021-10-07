@@ -419,27 +419,24 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
-                Arguments = "-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driver+"\""};
-                Process proc = new Process(){StartInfo = startInfo};
-                proc.Start();
+                RunBashCommand("-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driver+"\"");
             }
             
+        }
+
+        internal static void RunBashCommand(string command)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
+            Arguments = command};
+            Process proc = new Process(){StartInfo = startInfo};
+            proc.Start();
         }
 
         internal static void ExtractTGZ(String gzArchiveName, String destFolder)
         {
             try
             {
-                Stream inStream = File.OpenRead(gzArchiveName);
-                Stream gzipStream = new GZipInputStream(inStream);
-
-                TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream);
-                tarArchive.ExtractContents(destFolder);
-                tarArchive.Close();
-
-                gzipStream.Close();
-                inStream.Close();
+                RunBashCommand("-c \"cd "+destFolder+" && tar -xf "+gzArchiveName+"\"");
             }
             catch (Exception e)
             {
@@ -502,23 +499,42 @@ namespace Roman_Framework.Selenium.WebDriverManager
             }
             else
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
-                Arguments = "-c \"/usr/bin/google-chrome --version\"",
-                RedirectStandardOutput=true};
+                
 
-                Process proc = new Process(){StartInfo = startInfo};
-                proc.Start();
-                string output = proc.StandardOutput.ReadToEnd();
-
-                Browser chrome = new Browser(){
-                    Name = "chrome",
-                    Version = output.Split(" ")[2].Split(".")[0]
-                };
-
-                browsers.Add(chrome);
-                return browsers;
+                return GetLinuxBrowsers();
             }
 
+        }
+
+        internal static string GetBashOutput(string browser)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
+            Arguments = "-c \"/usr/bin/"+browser+" --version\"",
+            RedirectStandardOutput=true};
+
+            Process proc = new Process(){StartInfo = startInfo};
+            proc.Start();
+            string output = proc.StandardOutput.ReadToEnd();
+            return output;
+        }
+
+        internal static List<Browser> GetLinuxBrowsers()
+        {
+            List<Browser> browsers = new List<Browser>();
+
+            Browser chrome = new Browser(){
+                    Name = "chrome",
+                    Version = GetBashOutput("google-chrome").Split(" ")[2].Split(".")[0]
+                };
+
+            Browser firefox = new Browser(){
+                Name = "firefox",
+                Version = GetBashOutput("firefox").Split(" ")[2].Split(".")[0]
+            };
+
+            browsers.Add(chrome);
+            browsers.Add(firefox);
+            return browsers;
         }
     }
 
