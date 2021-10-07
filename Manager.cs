@@ -168,12 +168,12 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 bool sixtyfourBit = Environment.Is64BitOperatingSystem;
 
 
-                if (os.Equals(OperatingSystem.WINDOWS))
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     var asset = responseData.Assets.Where(x => x.Name.ToLower().Contains("win32")).FirstOrDefault();
                     return asset.browser_download_url.AbsoluteUri;
                 }
-                else if (os.Equals(OperatingSystem.MAC))
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
                     var asset = responseData.Assets.Where(x => x.Name.ToLower().Contains("macos")).FirstOrDefault();
                     return asset.browser_download_url.AbsoluteUri;
@@ -235,14 +235,13 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
             var version = driverVersions.Max(x => x);
 
-            var osPlatform = Environment.OSVersion;
             bool sixtyfourBit = Environment.Is64BitOperatingSystem;
 
-            if (os.Equals(OperatingSystem.WINDOWS))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return edge_OS(version.ToString(), "win32");
             }
-            else if (os.Equals(OperatingSystem.MAC))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
 
                 return edge_OS(version.ToString(), "mac" + (sixtyfourBit ? "64" : "32"));
@@ -284,10 +283,9 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 version = data.Contents.Where(x => x.Key.Split(".")[0].Contains(browser.Version.Split(".")[0])).ToList();
             }
 
-            var osPlatform = Environment.OSVersion;
             bool sixtyfourBit = Environment.Is64BitOperatingSystem;
 
-            if (!osPlatform.Equals(OperatingSystem.WINDOWS) && browser.Name.ToLower().Contains("explorer") && browser.Name.ToLower().Contains("internet"))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && browser.Name.ToLower().Contains("explorer") && browser.Name.ToLower().Contains("internet"))
             {
                 throw new NotImplementedException();
             }
