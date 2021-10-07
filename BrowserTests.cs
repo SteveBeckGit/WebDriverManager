@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,9 +56,13 @@ namespace WebDriverManager
         public void FirefoxTest()
         {
             var binaryDir = Manager.GetWebDriver(Manager.BrowserType.FIREFOX);
-
-
-            var driver = new FirefoxDriver();
+            FirefoxDriverService firefoxDriverService = FirefoxDriverService.CreateDefaultService();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) 
+            {
+                firefoxDriverService.FirefoxBinaryPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
+            }
+                
+            var driver = new FirefoxDriver(firefoxDriverService);
             Assert.That(driver != null);
             driver.Quit();
         }
