@@ -15,6 +15,7 @@ using Roman_Framework.Selenium.WebDriverManager.Models;
 using RestSharp;
 using Newtonsoft.Json;
 using System.Xml.Serialization;
+using System.Runtime.InteropServices;
 
 namespace Roman_Framework.Selenium.WebDriverManager
 {
@@ -131,12 +132,12 @@ namespace Roman_Framework.Selenium.WebDriverManager
                 case BrowserType.CHROME:
 
                     driver = GetVersionFromGoogleAPIS(chrome_url, browser, os);
-                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver.exe", "webdriver.chrome.driver");
+                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver", "webdriver.chrome.driver");
 
                 case BrowserType.FIREFOX:
 
                     driver = GetFireFoxURL(browser, os);
-                    return DownloadAndUnzip(driver, os, browser, "geckodriver.exe", "webdriver.gecko.driver");
+                    return DownloadAndUnzip(driver, os, browser, "geckodriver", "webdriver.gecko.driver");
 
                 case BrowserType.INTERNET_EXPLORER:
 
@@ -145,11 +146,11 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
                 case BrowserType.EDGE:
 
-                    return DownloadAndUnzip(GetEdgeURL(browser, os), os, browser, "msedgedriver.exe", "webdriver.edge.driver");
+                    return DownloadAndUnzip(GetEdgeURL(browser, os), os, browser, "msedgedriver", "webdriver.edge.driver");
 
                 default:
                     driver = GetVersionFromGoogleAPIS(chrome_url, browser, os);
-                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver.exe", "webdriver.chrome.driver");
+                    return DownloadAndUnzip(chrome_url + driver, os, browser, "chromedriver", "webdriver.chrome.driver");
             }
         }
 
@@ -254,6 +255,8 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
         }
 
+
+
         /*
          * Retrieves Chromedriver versions from the archive 
          * Filters for the major versions of the specified browser and returns the latest driver with the same major version
@@ -295,11 +298,11 @@ namespace Roman_Framework.Selenium.WebDriverManager
             }
 
 
-            if (osPlatform.Equals(OperatingSystem.WINDOWS))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return version.Where(x => x.Key.ToLower().Contains("win32")).FirstOrDefault().Key;
             }
-            else if (osPlatform.Equals(OperatingSystem.MAC))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
 
                 return version.Where(x => x.Key.ToLower().Contains("mac" + (sixtyfourBit ? "64" : "32"))).FirstOrDefault().Key;
@@ -319,13 +322,12 @@ namespace Roman_Framework.Selenium.WebDriverManager
 
         internal static string GetWebDriverPath(Browser browser)
         {
-            var os = Environment.OSVersion;
-            if(os.Equals(OperatingSystem.WINDOWS))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 string user = Environment.GetEnvironmentVariable("USERPROFILE");
-                return user + "\\WebDrivers\\" + browser.Name + "\\" + os.ToString() + "\\" + browser.Version + "\\";
+                return user + "\\WebDrivers\\" + browser.Name + "\\" + browser.Version + "\\";
             }
-            else if(os.Equals(OperatingSystem.MAC))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 string user = Environment.GetEnvironmentVariable("%HOMEDRIVE%%HOMEPATH%");
                 return user+"/WebDrivers/"+browser.Name+"/"+browser.Version+"/";
@@ -350,6 +352,12 @@ namespace Roman_Framework.Selenium.WebDriverManager
         /// <returns></returns>
         private static string DownloadAndUnzip(string url, OperatingSystem os, Browser browser, string filename, string environmentVariable)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                filename = filename + ".exe";
+            }
+
+
             string user = System.Environment.GetEnvironmentVariable("USERPROFILE");
             string destination = GetWebDriverPath(browser);
             Directory.CreateDirectory(destination);
@@ -393,7 +401,7 @@ namespace Roman_Framework.Selenium.WebDriverManager
                     }
                 }
 
-                MoveFileToBin(destination,"chromedriver");
+                MoveFileToBin(destination,filename);
 
 
             }
@@ -402,20 +410,19 @@ namespace Roman_Framework.Selenium.WebDriverManager
             return destination;
         }
 
-        internal static void MoveFileToBin(string destination, string driverType)
+        internal static void MoveFileToBin(string destination, string driver)
         {
-            string driver = (Environment.OSVersion.Equals(OperatingSystem.WINDOWS))? driverType+".exe" : driverType;
 
-            if(File.Exists(destination+"/"+driver))
+            if(File.Exists(destination+driver))
             {
                 File.Copy(destination+driver,AppDomain.CurrentDomain.BaseDirectory+driver,true);
             }
 
 
-            if(!Environment.OSVersion.Equals(OperatingSystem.WINDOWS))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo(){FileName = "/bin/bash",
-                Arguments = "-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driverType+"\""};
+                Arguments = "-c \"chmod +x "+AppDomain.CurrentDomain.BaseDirectory+"/"+driver+"\""};
                 Process proc = new Process(){StartInfo = startInfo};
                 proc.Start();
             }
